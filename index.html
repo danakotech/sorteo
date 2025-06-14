@@ -100,20 +100,20 @@
     <button type="submit">Reclamar Tesoro NFT</button>
   </form>
 
-  <footer>Contrato: 0x7eb5d15dde6260f55636a75232baf890326d9b6f<br/>Compatible con PC y móviles vía MetaMask.</footer>
+  <footer>Contrato: 0x7eb5d15dde6260f55636a75232baf890326d9b6f</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
   <script>
-    let provider;
-    let signer;
-    let contract;
+    let provider = null;
+    let signer = null;
+    let contract = null;
     const contractAddress = "0x7eb5d15dde6260f55636a75232baf890326d9b6f";
     const abi = [
       "function claim(string memory _answer) public"
     ];
 
     async function connectWallet() {
-      if (typeof window.ethereum === 'undefined') {
+      if (!window.ethereum) {
         document.getElementById("connectStatus").innerText = "❌ MetaMask no está instalado.";
         return;
       }
@@ -122,9 +122,9 @@
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
         const address = await signer.getAddress();
         document.getElementById("connectStatus").innerText = "✅ Conectado: " + address;
-        contract = new ethers.Contract(contractAddress, abi, signer);
       } catch (err) {
         console.error(err);
         document.getElementById("connectStatus").innerText = "❌ Error al conectar: " + err.message;
@@ -132,12 +132,17 @@
     }
 
     async function claimTreasure() {
-      if (!contract) {
-        alert("Primero conecta tu wallet.");
+      if (!contract || !signer) {
+        alert("Por favor, conecta primero tu wallet.");
         return;
       }
 
       const answer = document.getElementById("respuesta").value.trim();
+      if (!answer) {
+        alert("Por favor, introduce tu respuesta.");
+        return;
+      }
+
       try {
         const tx = await contract.claim(answer);
         await tx.wait();
