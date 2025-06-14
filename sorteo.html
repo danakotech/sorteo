@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cofre Criptográfico NFT</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
+      background-size: 400% 400%;
+      animation: gradient 10s ease infinite;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 20px;
+    }
+
+    @keyframes gradient {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    h1 {
+      font-size: 3em;
+      text-shadow: 0 0 10px #00ffe5, 0 0 20px #00c9ff;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {text-shadow: 0 0 10px #00ffe5;}
+      50% {text-shadow: 0 0 25px #00c9ff;}
+      100% {text-shadow: 0 0 10px #00ffe5;}
+    }
+
+    form {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      max-width: 500px;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 15px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background-color: #00ffe5;
+      color: #000;
+      font-weight: bold;
+      border-radius: 5px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #aaa;
+      text-align: center;
+    }
+
+    #connectStatus {
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #00ffe5;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 Cofre Criptográfico NFT</h1>
+  <p>Resuelve correctamente esta pregunta y reclama tu NFT:</p>
+  <p><strong>¿Quién fundó en España Tilllate.com?</strong></p>
+
+  <div id="connectStatus">⏳ Esperando conexión con MetaMask...</div>
+  <button onclick="connectWallet()">Conectar con MetaMask</button>
+
+  <form onsubmit="claimTreasure(); return false;">
+    <label for="respuesta">Tu respuesta:</label>
+    <input type="text" id="respuesta" placeholder="Introduce tu respuesta secreta..." required />
+    <button type="submit">Reclamar Tesoro NFT</button>
+  </form>
+
+  <footer>Contrato: 0x7eb5d15dde6260f55636a75232baf890326d9b6f<br/>Compatible con PC y móviles vía MetaMask.</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <script>
+    let provider;
+    let signer;
+    let contract;
+    const contractAddress = "0x7eb5d15dde6260f55636a75232baf890326d9b6f";
+    const abi = [
+      "function claim(string memory _answer) public"
+    ];
+
+    async function connectWallet() {
+      if (typeof window.ethereum === 'undefined') {
+        document.getElementById("connectStatus").innerText = "❌ MetaMask no está instalado.";
+        return;
+      }
+
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        const address = await signer.getAddress();
+        document.getElementById("connectStatus").innerText = "✅ Conectado: " + address;
+        contract = new ethers.Contract(contractAddress, abi, signer);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("connectStatus").innerText = "❌ Error al conectar: " + err.message;
+      }
+    }
+
+    async function claimTreasure() {
+      if (!contract) {
+        alert("Primero conecta tu wallet.");
+        return;
+      }
+
+      const answer = document.getElementById("respuesta").value.trim();
+      try {
+        const tx = await contract.claim(answer);
+        await tx.wait();
+        alert("✅ Has reclamado el NFT correctamente.");
+      } catch (err) {
+        console.error(err);
+        alert("❌ Error al reclamar: " + (err.data?.message || err.message));
+      }
+    }
+  </script>
+</body>
+</html>
