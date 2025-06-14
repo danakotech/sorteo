@@ -8,139 +8,118 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
-      background-size: 400% 400%;
-      animation: gradient 10s ease infinite;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 50px 20px;
     }
-    @keyframes gradient {
-      0% {background-position: 0% 50%;}
-      50% {background-position: 100% 50%;}
-      100% {background-position: 0% 50%;}
-    }
+
     h1 {
-      font-size: 3em;
-      text-shadow: 0 0 10px #00ffe5, 0 0 20px #00c9ff;
-      animation: pulse 2s infinite;
+      font-size: 2.5em;
+      text-shadow: 0 0 10px #00ffe5;
     }
-    @keyframes pulse {
-      0% {text-shadow: 0 0 10px #00ffe5;}
-      50% {text-shadow: 0 0 25px #00c9ff;}
-      100% {text-shadow: 0 0 10px #00ffe5;}
-    }
-    form {
-      background: rgba(255, 255, 255, 0.1);
+
+    form, .wallet-box {
+      background: rgba(255, 255, 255, 0.08);
       padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.6);
-      max-width: 500px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      max-width: 480px;
       width: 100%;
       margin-top: 20px;
     }
+
     input[type="text"] {
       width: 100%;
-      padding: 12px;
-      margin: 15px 0;
-      border: none;
-      border-radius: 5px;
+      padding: 10px;
+      margin-top: 10px;
       font-size: 1em;
+      border-radius: 5px;
+      border: none;
     }
+
     button {
+      margin-top: 15px;
       width: 100%;
       padding: 12px;
-      border: none;
       background-color: #00ffe5;
       color: #000;
       font-weight: bold;
+      border: none;
       border-radius: 5px;
       font-size: 1.1em;
       cursor: pointer;
-      transition: transform 0.2s ease;
     }
-    button:hover {
-      transform: scale(1.05);
-    }
+
     footer {
       margin-top: 40px;
       font-size: 0.9em;
-      color: #aaa;
-      text-align: center;
+      color: #ccc;
     }
-    #connectStatus {
-      margin-bottom: 20px;
-      font-weight: bold;
+
+    #status {
+      margin-bottom: 10px;
       color: #00ffe5;
     }
   </style>
 </head>
 <body>
-  <h1>🔐 Cofre Criptográfico NFT</h1>
-  <p>Resuelve correctamente esta pregunta y reclama tu NFT:</p>
-  <p><strong>¿Quién fundó en España Tilllate.com?</strong></p>
+  <h1>🎁 Reclama tu Tesoro NFT</h1>
+  <div class="wallet-box">
+    <div id="status">🔌 Conecta tu wallet para empezar.</div>
+    <button onclick="connectWallet()">Conectar con MetaMask</button>
+  </div>
 
-  <div id="connectStatus">⏳ Esperando conexión con MetaMask...</div>
-  <button onclick="connectWallet()">Conectar con MetaMask</button>
-
-  <form onsubmit="claimTreasure(); return false;">
-    <label for="respuesta">Tu respuesta:</label>
-    <input type="text" id="respuesta" placeholder="Introduce tu respuesta secreta..." required />
-    <button type="submit">Reclamar Tesoro NFT</button>
+  <form onsubmit="claimNFT(event)">
+    <label>¿Quién fundó en España Tilllate.com?</label>
+    <input id="respuesta" type="text" required placeholder="Escribe tu respuesta..." />
+    <button type="submit">Reclamar NFT</button>
   </form>
 
   <footer>Contrato: 0x7eb5d15dde6260f55636a75232baf890326d9b6f</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script>
-    let provider = null;
-    let signer = null;
-    let contract = null;
+    let provider, signer, contract;
     const contractAddress = "0x7eb5d15dde6260f55636a75232baf890326d9b6f";
-    const abi = [
-      "function claim(string memory _answer) public"
-    ];
+    const abi = ["function claim(string memory _answer) public"];
 
     async function connectWallet() {
       if (!window.ethereum) {
-        document.getElementById("connectStatus").innerText = "❌ MetaMask no está instalado.";
+        document.getElementById("status").innerText = "❌ MetaMask no está instalado.";
         return;
       }
-
       try {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
         const address = await signer.getAddress();
-        document.getElementById("connectStatus").innerText = "✅ Conectado: " + address;
-      } catch (err) {
-        console.error(err);
-        document.getElementById("connectStatus").innerText = "❌ Error al conectar: " + err.message;
+        document.getElementById("status").innerText = "✅ Wallet conectada: " + address;
+      } catch (e) {
+        console.error(e);
+        document.getElementById("status").innerText = "❌ Error al conectar.";
       }
     }
 
-    async function claimTreasure() {
-      if (!contract || !signer) {
-        alert("Por favor, conecta primero tu wallet.");
+    async function claimNFT(event) {
+      event.preventDefault();
+      if (!contract) {
+        alert("Primero conecta tu wallet.");
         return;
       }
 
-      const answer = document.getElementById("respuesta").value.trim();
-      if (!answer) {
-        alert("Por favor, introduce tu respuesta.");
-        return;
-      }
-
+      const answer = document.getElementById("respuesta").value;
       try {
         const tx = await contract.claim(answer);
+        document.getElementById("status").innerText = "📦 Enviando transacción...";
         await tx.wait();
-        alert("✅ Has reclamado el NFT correctamente.");
+        document.getElementById("status").innerText = "✅ NFT reclamado con éxito.";
       } catch (err) {
         console.error(err);
-        alert("❌ Error al reclamar: " + (err.data?.message || err.message));
+        document.getElementById("status").innerText = "❌ Error: " + (err.data?.message || err.message);
       }
     }
   </script>
